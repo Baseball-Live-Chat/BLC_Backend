@@ -4,9 +4,11 @@ import com.blc.blc_backend.users.dto.UserRequestDto;
 import com.blc.blc_backend.users.dto.UserResponseDto;
 import com.blc.blc_backend.users.entity.User;
 import com.blc.blc_backend.users.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,5 +131,40 @@ public class UserService {
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * 프론트 비동기 중복 체크용 메서드
+     * - username/email/nickname 별로 호출
+     * - 중복 시 ResourceConflictException 발생 (HTTP 409)
+     */
+    @Transactional(readOnly = true)
+    public void checkUsername(String username) {
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 사용 중인 아이디입니다."
+            );
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void checkEmail(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 등록된 이메일입니다."
+            );
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void checkNickname(String nickname) {
+        if (userRepository.findByNickname(nickname).isPresent()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 사용 중인 닉네임입니다."
+            );
+        }
     }
 }
