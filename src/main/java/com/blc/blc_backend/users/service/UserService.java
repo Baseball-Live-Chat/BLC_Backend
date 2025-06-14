@@ -134,7 +134,6 @@ public class UserService {
     /**
      * 프론트 비동기 중복 체크용 메서드
      * - username/email/nickname 별로 호출
-     * - 중복 시 ResourceConflictException 발생 (HTTP 409)
      */
     @Transactional(readOnly = true)
     public void checkUsername(String username) {
