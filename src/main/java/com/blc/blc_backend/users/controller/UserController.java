@@ -56,7 +56,6 @@ public class UserController {
 
     // ————————————————————————————————————————————
     // 프론트 비동기 중복체크용 전용 엔드포인트 (onBlur 또는 “중복 확인” 버튼에 사용)
-    // 서비스 레이어에서 중복 시 ResourceConflictException(409)을 던지도록 구현되어 있다고 가정
 
     /** 아이디(로그인명) 중복 확인 */
     @GetMapping("/check/username")
