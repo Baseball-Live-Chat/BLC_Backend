@@ -1,8 +1,8 @@
-package com.blc.blc_backend.user.controller;
+package com.blc.blc_backend.users.controller;
 
-import com.blc.blc_backend.user.dto.UserRequestDto;
-import com.blc.blc_backend.user.dto.UserResponseDto;
-import com.blc.blc_backend.user.service.UserService;
+import com.blc.blc_backend.users.dto.UserRequestDto;
+import com.blc.blc_backend.users.dto.UserResponseDto;
+import com.blc.blc_backend.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

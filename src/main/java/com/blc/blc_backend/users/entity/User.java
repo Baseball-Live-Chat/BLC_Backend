@@ -1,4 +1,4 @@
-package com.blc.blc_backend.user.entity;
+package com.blc.blc_backend.users.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
