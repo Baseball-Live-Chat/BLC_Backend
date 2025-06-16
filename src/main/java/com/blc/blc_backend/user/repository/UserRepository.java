@@ -1,6 +1,6 @@
-package com.blc.blc_backend.users.repository;
+package com.blc.blc_backend.user.repository;
 
-import com.blc.blc_backend.users.entity.User;
+import com.blc.blc_backend.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
