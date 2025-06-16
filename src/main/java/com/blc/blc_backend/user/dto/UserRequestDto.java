@@ -1,4 +1,4 @@
-package com.blc.blc_backend.users.dto;
+package com.blc.blc_backend.user.dto;
 
 import lombok.Getter;
 import lombok.Setter;

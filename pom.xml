@@ -104,6 +104,21 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.20.1</version>
 		</dependency>
+		<!-- swagger를 위한 의존성 추가. springdoc로 검색 : SpringDoc OpenAPI Starter WebMVC UI -->
+		<!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.4.0</version>
+		</dependency>
+
+		<!-- 생산성 도구 의존성 추가. Swagger 작업시 변경사항을 자동으로 반영해주는 도구-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -1,9 +1,9 @@
-package com.blc.blc_backend.users.service;
+package com.blc.blc_backend.user.service;
 
-import com.blc.blc_backend.users.dto.UserRequestDto;
-import com.blc.blc_backend.users.dto.UserResponseDto;
-import com.blc.blc_backend.users.entity.User;
-import com.blc.blc_backend.users.repository.UserRepository;
+import com.blc.blc_backend.user.dto.UserRequestDto;
+import com.blc.blc_backend.user.dto.UserResponseDto;
+import com.blc.blc_backend.user.entity.User;
+import com.blc.blc_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
