@@ -27,15 +27,15 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         ChatMessage saved = repository.save(msg);
         // @Slf4j가 제공하는 log 사용
-        log.info("새로운 채팅 메시지 생성 → roomId={}, userId={}, type={}, content='{}'",
-                roomId, dto.getUserId(), dto.getType(), dto.getContent());
+        log.debug("채팅 메시지 생성 → roomId={}, userId={}, type={}, createdAt={}, 내용='{}'",
+                roomId, dto.getUserId(), dto.getType(), saved.getCreatedAt(), dto.getContent());
         return saved;
     }
 
     @Override
     public List<ChatMessage> getMessagesByRoom(Long roomId) {
         List<ChatMessage> list = repository.findByRoomIdOrderByCreatedAtAsc(roomId);
-        log.info("채팅 메시지 조회 → roomId={}, count={}", roomId, list.size());
+        log.debug("채팅 메시지 조회 → roomId={}, count={}", roomId, list.size());
         return list;
     }
 }
