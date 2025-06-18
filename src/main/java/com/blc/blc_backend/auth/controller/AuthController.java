@@ -27,14 +27,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequestDto req,
                                         HttpServletRequest httpReq) {
-        try {
-            authService.login(req, httpReq);
-            return ResponseEntity.ok("로그인 성공");
-        } catch (BadCredentialsException ex) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body("아이디 또는 비밀번호가 올바르지 않습니다.");
-        }
+        authService.login(req, httpReq);  // 예외가 여기서 throw 되면 어드바이스로 넘어감
+        return ResponseEntity.ok("로그인 성공");
     }
 
     @PostMapping("/logout")
