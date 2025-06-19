@@ -1,9 +1,9 @@
-package com.blc.blc_backend.chatmessage.controller;
+package com.blc.blc_backend.chat.controller;
 
 
-import com.blc.blc_backend.chatmessage.dto.ChatMessageRequestDto;
-import com.blc.blc_backend.chatmessage.entity.ChatMessage;
-import com.blc.blc_backend.chatmessage.service.ChatMessageService;
+import com.blc.blc_backend.chat.dto.ChatMessageRequestDto;
+import com.blc.blc_backend.chat.dto.ChatMessageResponseDto;
+import com.blc.blc_backend.chat.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,16 +18,16 @@ public class ChatMessageController {
     private final ChatMessageService chatMessageService;
 
     @PostMapping("/rooms/{roomId}/message")
-    public ResponseEntity<ChatMessage> postMessage(
+    public ResponseEntity<ChatMessageResponseDto> postMessage(
             @PathVariable Long roomId,
             @RequestBody ChatMessageRequestDto dto) {
-        ChatMessage created = chatMessageService.createMessage(roomId, dto);
+        ChatMessageResponseDto created = chatMessageService.createMessage(roomId, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/rooms/{roomId}")
-    public ResponseEntity<List<ChatMessage>> getMessages(@PathVariable Long roomId) {
-        List<ChatMessage> messages = chatMessageService.getMessagesByRoom(roomId);
+    public ResponseEntity<List<ChatMessageResponseDto>> getMessages(@PathVariable Long roomId) {
+        List<ChatMessageResponseDto> messages = chatMessageService.getMessagesByRoom(roomId);
         if (messages.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

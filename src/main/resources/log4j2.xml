@@ -57,7 +57,7 @@
 
     <Loggers>
         <!-- 채팅 서비스 전용 로거 (채팅 콘솔 + 파일) -->
-        <Logger name="com.blc.blc_backend.chatmessage.service" level="DEBUG" additivity="false">
+        <Logger name="com.blc.blc_backend.chat.service" level="DEBUG" additivity="false">
             <AppenderRef ref="ChatConsole"/>
             <AppenderRef ref="ChatFileAppender"/>
         </Logger>

@@ -1,9 +1,7 @@
-package com.blc.blc_backend.chatmessage.entity;
+package com.blc.blc_backend.chat.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +10,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ChatMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +20,9 @@ public class ChatMessage {
 
     @Column(name = "room_id", nullable = false)
     private Long roomId;
+
+    @Column(name = "team_id", nullable = false)
+    private Long teamId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
