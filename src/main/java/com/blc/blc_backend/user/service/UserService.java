@@ -61,6 +61,13 @@ public class UserService {
         return toResponseDto(user);
     }
 
+    @Transactional(readOnly = true)
+    public UserResponseDto getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. email=" + email));
+        return toResponseDto(user);
+    }
+
     /**
      * 전체 조회
      */
