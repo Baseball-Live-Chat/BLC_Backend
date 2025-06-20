@@ -17,11 +17,12 @@ import org.springframework.stereotype.Controller;
 public class ChatWebSocketController {
 
     private final ChatMessageService chatMessageService;
+    private final ChatRoomService chatRoomService;
 
-    @MessageMapping("/chat.sendMessage/{roomId}")
-    @SendTo("/topic/rooms/{roomId}")
-    public ChatMessageResponseDto  sendMessage(@DestinationVariable Long roomId,@Payload ChatMessageRequestDto messageRequest) {
-        chatMessageService.createMessage(roomId, messageRequest);
+    @MessageMapping("/chat.sendMessage/{gameId}")
+    @SendTo("/topic/game/{gameId}")
+    public ChatMessageResponseDto  sendMessage(@DestinationVariable Long gameId,@Payload ChatMessageRequestDto messageRequest) {
+        Long roomId = chatRoomService.getRoomIdByGameId(gameId);
         return chatMessageService.createMessage(roomId, messageRequest);
     }
 
