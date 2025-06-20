@@ -10,7 +10,10 @@ import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -21,6 +24,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@SpringBootTest
 class ScheduleCrawlerServiceTest {
 
     @Mock
@@ -137,5 +141,23 @@ class ScheduleCrawlerServiceTest {
         verify(gameRepo, never()).save(any(Game.class));
         // chatRoomService.create()도 호출되지 않아야 함
         verify(chatRoomService, never()).create(any(), anyString());
+    }
+
+
+    @Autowired
+    ScheduleCrawlerService crawlerService;
+    @Autowired
+    ChatRoomService chatRoomService2;
+
+    @Test
+    @Transactional
+    void makeTest() {
+        crawlerService.crawlGameInfo(LocalDate.of(2025,6,24));
+    }
+
+    @Test
+    @Transactional
+    void disableTest2() {
+        chatRoomService2.disableChatRooms(LocalDate.of(2025,6,25));
     }
 }
