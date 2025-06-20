@@ -65,7 +65,7 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService() {
         return email -> userRepository.findByEmail(email)
                 .map(user -> org.springframework.security.core.userdetails.User.builder()
-                        .username(user.getEmail())
+                        .username(user.getUsername())
                         .password(user.getPasswordHash())
                         .roles("USER")
                         .build())

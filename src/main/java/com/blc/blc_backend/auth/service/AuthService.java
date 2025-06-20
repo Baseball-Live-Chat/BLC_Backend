@@ -24,7 +24,7 @@ public class AuthService {
      */
     public void login(LoginRequestDto req, HttpServletRequest httpReq) {
         UsernamePasswordAuthenticationToken token =
-                new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword());
+                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword());
 
         Authentication auth = authenticationManager.authenticate(token);
         SecurityContextHolder.getContext().setAuthentication(auth);

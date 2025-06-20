@@ -14,7 +14,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(UsernameNotFoundException ex) {
-        return build(HttpStatus.UNAUTHORIZED, "등록된 이메일이 아닙니다.");
+        return build(HttpStatus.UNAUTHORIZED, "등록된 아이디가 아닙니다.");
     }
 
     @ExceptionHandler(BadCredentialsException.class)
