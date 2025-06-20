@@ -1,12 +1,12 @@
-package com.blc.blc_backend.chatmessage.dto;
+package com.blc.blc_backend.chat.dto;
 
-import com.blc.blc_backend.chatmessage.entity.MessageType;
+import com.blc.blc_backend.chat.entity.MessageType;
 import lombok.Getter;
-import lombok.Setter;
 
-@Getter @Setter
+@Getter
 public class ChatMessageRequestDto {
     private Long userId;
+    private Long teamId;
     private String content;
     private MessageType type;
 }
