@@ -1,16 +1,19 @@
 package com.blc.blc_backend.game.service;
 
+import com.blc.blc_backend.chatroom.service.ChatRoomService;
 import com.blc.blc_backend.game.dto.GameInfo;
 import com.blc.blc_backend.game.entity.Game;
 import com.blc.blc_backend.game.repository.GameRepository;
 import com.blc.blc_backend.team.entity.Team;
 import com.blc.blc_backend.team.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -24,21 +27,23 @@ import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ScheduleCrawlerService {
 
     private static final String GAME_INFO_URL = "https://statiz.sporki.com/schedule/?m=daily&date=";
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd";
     private static final String NOT_FOUND_TEAM_ERROR_FORMAT = "%s 팀이 없습니다.";
 
-
     private final TeamRepository teamRepo;
     private final GameRepository gameRepo;
+    private final ChatRoomService chatRoomService;
 
+    @Transactional
     public void crawlGameInfo(LocalDate date) {
         try {
             Document doc = crawl(date);
             List<GameInfo> gameInfos = getGameInfo(date, doc);
-            saveGameInfo(gameInfos);
+            saveGameInfos(gameInfos);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -96,7 +101,7 @@ public class ScheduleCrawlerService {
                         .stadium(stadium)
                         .build();
 
-                // TODO: log 남기기
+                log.info("[crawlGameInfo] {}]", gameInfo);
                 gameInfos.add(gameInfo);
             }
         } catch (NullPointerException e) {
@@ -106,31 +111,45 @@ public class ScheduleCrawlerService {
         return gameInfos;
     }
 
-    private void saveGameInfo(List<GameInfo> gameInfos) {
-        for (GameInfo gameInfo : gameInfos) {
-            String awayCode = gameInfo.getAwayCode();
-            String homeCode = gameInfo.getHomeCode();
-            LocalDateTime gameDateTime = gameInfo.getGameDateTime();
-            String stadium = gameInfo.getStadium();
-
-            Team away = teamRepo.findByTeamCode(awayCode)
-                    .orElseThrow(() -> new IllegalStateException(String.format(NOT_FOUND_TEAM_ERROR_FORMAT, awayCode)));
-            Team home = teamRepo.findByTeamCode(homeCode)
-                    .orElseThrow(() -> new IllegalStateException(String.format(NOT_FOUND_TEAM_ERROR_FORMAT, homeCode)));
-
-            if (gameRepo.existsByHomeTeamAndAwayTeamAndGameDate(home, away, gameDateTime)) {
-                continue;
-            }
-
-            Game game = Game.builder()
-                    .homeTeam(home)
-                    .awayTeam(away)
-                    .gameDate(gameDateTime)
-                    .stadium(stadium)
-                    .build();
-
-            gameRepo.save(game);
+    private void saveGameInfos(List<GameInfo> gameInfos) {
+        for (GameInfo info : gameInfos) {
+            Game saved = saveGame(info);
+            createChatRoomFor(saved);
         }
     }
 
+    private Game saveGame(GameInfo gameInfo) {
+        String awayCode = gameInfo.getAwayCode();
+        String homeCode = gameInfo.getHomeCode();
+        LocalDateTime gameDateTime = gameInfo.getGameDateTime();
+        String stadium = gameInfo.getStadium();
+
+        Team away = findTeam(awayCode);
+        Team home = findTeam(homeCode);
+
+        if (gameRepo.existsByHomeTeamAndAwayTeamAndGameDate(home, away, gameDateTime)) {
+            return null;
+        }
+
+        Game game = Game.builder()
+                .homeTeam(home)
+                .awayTeam(away)
+                .gameDate(gameDateTime)
+                .stadium(stadium)
+                .build();
+
+        return gameRepo.save(game);
+    }
+
+    private Team findTeam(String code) {
+        return teamRepo.findByTeamCode(code)
+                .orElseThrow(() -> new IllegalStateException(code + " 팀이 없습니다."));
+    }
+
+    private void createChatRoomFor(Game game) {
+        if (game == null) return;
+        String roomName = String.format("%s : %s vs %s",
+                game.getGameDate(), game.getAwayTeam().getTeamName(), game.getHomeTeam().getTeamName());
+        chatRoomService.create(game.getGameId(), roomName);
+    }
 }

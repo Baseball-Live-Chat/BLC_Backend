@@ -1,5 +1,6 @@
 package com.blc.blc_backend.game.service;
 
+import com.blc.blc_backend.chatroom.service.ChatRoomService;
 import com.blc.blc_backend.game.entity.Game;
 import com.blc.blc_backend.game.repository.GameRepository;
 import com.blc.blc_backend.team.entity.Team;
@@ -9,6 +10,8 @@ import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,6 +28,9 @@ class ScheduleCrawlerServiceTest {
 
     @Mock
     private GameRepository gameRepo;
+
+    @Mock
+    private ChatRoomService chatRoomService;
 
     // crawl(...) 메서드를 오버라이드하기 위해 서비스에 스파이 적용
     private ScheduleCrawlerService service;
@@ -54,14 +60,20 @@ class ScheduleCrawlerServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Mockito 어노테이션 초기화
         MockitoAnnotations.openMocks(this);
-        // 실제 서비스 인스턴스에 스파이를 적용해 crawl() 제어 가능
-        service = Mockito.spy(new ScheduleCrawlerService(teamRepo, gameRepo));
+        service = Mockito.spy(new ScheduleCrawlerService(teamRepo, gameRepo, chatRoomService));
+
+        // 저장된 Game 객체에 임의의 ID를 부여하고, 그 객체를 반환하도록 설정
+        when(gameRepo.save(any(Game.class))).thenAnswer(invocation -> {
+            Game g = invocation.getArgument(0);
+            // private field인 gameId에 리플렉션으로 값 세팅
+            ReflectionTestUtils.setField(g, "gameId", 1L);
+            return g;
+        });
     }
 
     @Test
-    void crawlGameInfo_savesNewGame() throws IOException {
+    void crawlGameInfo_savesNewGame_and_createsChatRoom() throws IOException {
         LocalDate date = LocalDate.of(2025, 6, 15);
 
         // 1) crawl(date) 호출 시 SAMPLE_HTML을 파싱한 Document를 반환하도록 설정
@@ -69,8 +81,8 @@ class ScheduleCrawlerServiceTest {
         doReturn(doc).when(service).crawl(date);
 
         // 2) 팀 리포지토리 반환값 설정
-        Team away = Team.builder().teamCode("롯데").build();
-        Team home = Team.builder().teamCode("SSG").build();
+        Team away = Team.builder().teamCode("롯데").teamName("롯데").build();
+        Team home = Team.builder().teamCode("SSG").teamName("SSG").build();
         when(teamRepo.findByTeamCode("롯데")).thenReturn(Optional.of(away));
         when(teamRepo.findByTeamCode("SSG")).thenReturn(Optional.of(home));
 
@@ -92,6 +104,11 @@ class ScheduleCrawlerServiceTest {
         assertEquals(away, saved.getAwayTeam(), "어웨이팀이 정확히 매핑되어야 합니다.");
         assertEquals(expectedDateTime, saved.getGameDate(), "경기 시간이 정확히 매핑되어야 합니다.");
         assertEquals("잠실", saved.getStadium(), "경기장이 정확히 매핑되어야 합니다.");
+
+        // 6) chatRoomService.create(...)가 한 번 호출되었는지, 올바른 파라미터와 함께 호출되었는지 검증
+        String expectedRoomName = String.format("%s : %s vs %s",
+                expectedDateTime, away.getTeamName(), home.getTeamName());
+        verify(chatRoomService, times(1)).create(1L, expectedRoomName);
     }
 
     @Test
@@ -103,8 +120,8 @@ class ScheduleCrawlerServiceTest {
         doReturn(doc).when(service).crawl(date);
 
         // 팀 조회 스텁 설정
-        Team away = Team.builder().teamCode("롯데").build();
-        Team home = Team.builder().teamCode("SSG").build();
+        Team away = Team.builder().teamCode("롯데").teamName("롯데").build();
+        Team home = Team.builder().teamCode("SSG").teamName("SSG").build();
         when(teamRepo.findByTeamCode("롯데")).thenReturn(Optional.of(away));
         when(teamRepo.findByTeamCode("SSG")).thenReturn(Optional.of(home));
 
@@ -116,7 +133,9 @@ class ScheduleCrawlerServiceTest {
         // 실행
         service.crawlGameInfo(date);
 
-        // save()가 호출되지 않음을 검증
+        // save() 호출 없이 건너뛰어야 함
         verify(gameRepo, never()).save(any(Game.class));
+        // chatRoomService.create()도 호출되지 않아야 함
+        verify(chatRoomService, never()).create(any(), anyString());
     }
 }
