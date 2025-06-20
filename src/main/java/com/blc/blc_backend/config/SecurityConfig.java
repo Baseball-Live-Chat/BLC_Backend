@@ -63,7 +63,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByUsername(usersname)
+        return username -> userRepository.findByUsername(username)
                 .map(user -> org.springframework.security.core.userdetails.User.builder()
                         .username(user.getUsername())
                         .password(user.getPasswordHash())
