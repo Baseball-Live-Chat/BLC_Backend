@@ -33,8 +33,8 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> me(Authentication authentication) {
-        String email = authentication.getName();
-        UserResponseDto dto = userService.getUserByEmail(email);
+        String username = authentication.getName();
+        UserResponseDto dto = userService.getUserByUsername(username);
         return ResponseEntity.ok(dto);
     }
 }

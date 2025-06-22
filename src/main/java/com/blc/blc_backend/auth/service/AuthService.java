@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,12 +27,18 @@ public class AuthService {
     public void login(LoginRequestDto req, HttpServletRequest httpReq) {
         UsernamePasswordAuthenticationToken token =
                 new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword());
-
         Authentication auth = authenticationManager.authenticate(token);
-        SecurityContextHolder.getContext().setAuthentication(auth);
 
-        // 세션 생성 (없으면 새로 만들고 JSESSIONID 발급)
-        httpReq.getSession(true);
+        // 2) SecurityContext에 인증 정보 세팅
+        SecurityContext context = SecurityContextHolder.getContext();
+        context.setAuthentication(auth);
+
+        // 3) 세션 생성 & SecurityContext 저장
+        HttpSession session = httpReq.getSession(true);
+        session.setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
     }
 
     /**
