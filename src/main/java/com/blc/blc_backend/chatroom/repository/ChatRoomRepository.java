@@ -14,5 +14,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
      * 지정된 기준일 이전 게임에 속하면서, 아직 활성화(isActive=true)된 채팅방을 모두 조회
      */
     List<ChatRoom> findByGame_GameDateBeforeAndIsActiveTrue(LocalDateTime before);
+
+    /**
+     * 경기 id로 채팅방 데이터 조회
+     * @param gameId
+     * @return room
+     */
+    ChatRoom findChatRoomByGame_GameId(Long gameId);
 }
 
