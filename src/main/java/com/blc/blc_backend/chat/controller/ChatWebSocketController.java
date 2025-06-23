@@ -3,6 +3,7 @@ package com.blc.blc_backend.chat.controller;
 import com.blc.blc_backend.chat.dto.ChatMessageRequestDto;
 import com.blc.blc_backend.chat.dto.ChatMessageResponseDto;
 import com.blc.blc_backend.chat.service.ChatMessageService;
+import com.blc.blc_backend.chatroom.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
