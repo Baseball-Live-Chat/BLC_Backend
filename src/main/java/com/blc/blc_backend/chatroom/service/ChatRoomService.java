@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -96,5 +97,15 @@ public class ChatRoomService {
 
         // 2) each 로 deactivate() 호출 (dirty checking으로 자동 반영)
         rooms.forEach(c -> c.updateIsActive(false));
+    }
+
+    public Long findRoomIdByGameId(Long gameId) {
+        ChatRoom chatRoom = chatRoomRepository.findChatRoomByGame_GameId(gameId);
+
+        if(chatRoom == null) {
+            throw new EntityNotFoundException("Room not found by GameId:" + gameId);
+        }
+
+        return chatRoom.getRoomId();
     }
 }
