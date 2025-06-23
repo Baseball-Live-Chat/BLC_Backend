@@ -99,7 +99,7 @@ public class ChatRoomService {
         rooms.forEach(c -> c.updateIsActive(false));
     }
 
-    public Long findRoomIdByGameId(Long gameId) {
+    public Long getRoomIdByGameId(Long gameId) {
         ChatRoom chatRoom = chatRoomRepository.findChatRoomByGame_GameId(gameId);
 
         if(chatRoom == null) {
