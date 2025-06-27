@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
@@ -17,6 +19,7 @@ public class ChatMessageResponseDto {
     private Long teamId;
     private String content;
     private MessageType type;
+    private LocalDateTime createdAt;
 
     public ChatMessageResponseDto(ChatMessage entity, String nickname) {
         this.userId = entity.getUserId();
@@ -24,5 +27,6 @@ public class ChatMessageResponseDto {
         this.teamId = entity.getTeamId();
         this.content = entity.getMessageContent();
         this.type = entity.getMessageType();
+        this.createdAt = entity.getCreatedAt();
     }
 }

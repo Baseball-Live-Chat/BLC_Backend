@@ -19,14 +19,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ChatMessageServiceImpl implements ChatMessageService {
-    private static final Long ANONYMOUS_ID = -1L;
     private static final String ANONYMOUS_NICKNAME = "익명";
     private final ChatMessageRepository repository;
     private final UserService userService;
 
     @Override
     public ChatMessageResponseDto createMessage(Long roomId, ChatMessageRequestDto dto) {
-        Long userId = checkAnonymous(dto.getUserId());
+        Long userId = dto.getUserId();
 
         ChatMessage msg = new ChatMessage();
         msg.setRoomId(roomId);
@@ -41,23 +40,15 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         log.debug("채팅 메시지 생성 → roomId={}, userId={}, type={}, createdAt={}, teamId={}, 내용='{}'",
                 roomId, dto.getUserId(), dto.getType(), saved.getCreatedAt(), dto.getTeamId(), dto.getContent());
 
-        return makeChatMessageResponse(saved, userId);
+        return makeChatMessageResponse(saved);
     }
 
-    private ChatMessageResponseDto makeChatMessageResponse(ChatMessage msg, Long userId) {
-        if(userId == ANONYMOUS_ID) {
+    private ChatMessageResponseDto makeChatMessageResponse(ChatMessage msg) {
+        if(msg.getUserId() == null) {
             return new ChatMessageResponseDto(msg, ANONYMOUS_NICKNAME);
         }
         UserResponseDto user = userService.getUserById(msg.getUserId());
         return new ChatMessageResponseDto(msg, user.getNickname());
-    }
-
-    // null userId → 익명 처리용 -1L
-    private Long checkAnonymous(Long receivedId) {
-        if(receivedId == null) {
-            return ANONYMOUS_ID;
-        }
-        return receivedId;
     }
 
     @Override
@@ -65,7 +56,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         List<ChatMessage > messages = repository.findByRoomIdOrderByCreatedAtAsc(roomId);
         log.debug("채팅 메시지 조회 → roomId={}, count={}", roomId, messages.size());
         return messages.stream()
-                .map(msg -> makeChatMessageResponse(msg, msg.getUserId()))
+                .map(this::makeChatMessageResponse)
                 .collect(Collectors.toList());
     }
 }

@@ -24,7 +24,7 @@ public class ChatMessage {
     @Column(name = "team_id", nullable = false)
     private Long teamId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(name = "message_content", nullable = false, columnDefinition = "TEXT")
