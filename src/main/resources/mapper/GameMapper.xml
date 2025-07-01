@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.blc.blc_backend.game.mapper.GameMapper">
+
+    <!-- 결과 매핑 -->
+    <resultMap id="GameInfoResultMap" type="com.blc.blc_backend.game.dto.GameInfo">
+        <result property="homeCode" column="home_code"/>
+        <result property="awayCode" column="away_code"/>
+        <result property="gameDateTime" column="game_date"/>
+        <result property="stadium" column="stadium"/>
+    </resultMap>
+
+    <!-- 상세 조회용 결과 매핑 -->
+    <resultMap id="GameDetailInfoResultMap" type="com.blc.blc_backend.game.dto.GameDetailInfo">
+        <result property="gameId" column="game_id"/>
+        <result property="homeTeamName" column="home_team_name"/>
+        <result property="homeCode" column="home_code"/>
+        <result property="homeLogoUrl" column="home_logo_url"/>
+        <result property="homeTeamColor" column="home_team_color"/>
+        <result property="awayTeamName" column="away_team_name"/>
+        <result property="awayCode" column="away_code"/>
+        <result property="awayLogoUrl" column="away_logo_url"/>
+        <result property="awayTeamColor" column="away_team_color"/>
+        <result property="gameDateTime" column="game_date"/>
+        <result property="stadium" column="stadium"/>
+    </resultMap>
+
+    <!-- 기본 조인 쿼리 (리스트용) -->
+    <sql id="gameJoinQuery">
+        SELECT
+            ht.team_code as home_code,
+            at.team_code as away_code,
+            g.game_date,
+            g.stadium
+        FROM games g
+                 JOIN teams ht ON g.home_team_id = ht.team_id
+                 JOIN teams at ON g.away_team_id = at.team_id
+    </sql>
+
+    <!-- 상세 조회용 조인 쿼리 -->
+    <sql id="gameDetailJoinQuery">
+        SELECT
+            g.game_id,
+            ht.team_name as home_team_name,
+            ht.team_code as home_code,
+            ht.logo_url as home_logo_url,
+            ht.team_color as home_team_color,
+            at.team_name as away_team_name,
+            at.team_code as away_code,
+            at.logo_url as away_logo_url,
+            at.team_color as away_team_color,
+            g.game_date,
+            g.stadium
+        FROM games g
+                 JOIN teams ht ON g.home_team_id = ht.team_id
+                 JOIN teams at ON g.away_team_id = at.team_id
+    </sql>
+
+    <!-- 필터링 조건 -->
+    <sql id="whereConditions">
+        <where>
+            <if test="startDate != null">
+                <![CDATA[
+                AND DATE(g.game_date) >= #{startDate}
+                ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[
+                AND DATE(g.game_date) <= #{endDate}
+                ]]>
+            </if>
+            <if test="teamCode != null and teamCode != ''">
+                AND (ht.team_code = #{teamCode} OR at.team_code = #{teamCode})
+            </if>
+            <if test="stadium != null and stadium != ''">
+                AND g.stadium LIKE CONCAT('%', #{stadium}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <!-- 전체 경기 리스트 조회 -->
+    <select id="findGames" parameterType="com.blc.blc_backend.game.dto.GameListRequest"
+            resultMap="GameInfoResultMap">
+        <include refid="gameJoinQuery"/>
+        <include refid="whereConditions"/>
+        ORDER BY g.game_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 전체 경기 수 조회 -->
+    <select id="countGames" parameterType="com.blc.blc_backend.game.dto.GameListRequest"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM games g
+        JOIN teams ht ON g.home_team_id = ht.team_id
+        JOIN teams at ON g.away_team_id = at.team_id
+        <include refid="whereConditions"/>
+    </select>
+
+    <!-- 특정 경기 상세 조회 -->
+    <select id="findGameDetailById" parameterType="long" resultMap="GameDetailInfoResultMap">
+        <include refid="gameDetailJoinQuery"/>
+        WHERE g.game_id = #{gameId}
+    </select>
+
+</mapper>

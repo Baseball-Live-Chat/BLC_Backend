@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <!-- 로그 파일 저장 경로 -->
+        <Property name="LOG_HOME">./logs</Property>
+        <!-- 일반 로그 패턴 -->
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Property>
+        <!-- 채팅 전용 콘솔 패턴 -->
+        <Property name="CHAT_CONSOLE_PATTERN">%style{[채팅]}{bright_green} %d{HH:mm:ss} %highlight{%-5level} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- 기본 콘솔 Appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight{[%thread] %-5level} %style{%logger{36}}{cyan} - %msg%n"/>
+        </Console>
+
+        <!-- 채팅 전용 콘솔 Appender (서버 CMD 창용) -->
+        <Console name="ChatConsole" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CHAT_CONSOLE_PATTERN}"/>
+        </Console>
+
+        <!-- 일반 애플리케이션 로그 파일 -->
+        <RollingFile name="FileAppender" fileName="${LOG_HOME}/blc-application.log"
+                     filePattern="${LOG_HOME}/blc-application-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!-- 채팅 메시지 전용 로그 파일 -->
+        <RollingFile name="ChatFileAppender" fileName="${LOG_HOME}/chat-messages.log"
+                     filePattern="${LOG_HOME}/chat-messages-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="50MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="60"/>
+        </RollingFile>
+
+        <!-- 에러 전용 로그 파일 -->
+        <RollingFile name="ErrorFileAppender" fileName="${LOG_HOME}/error.log"
+                     filePattern="${LOG_HOME}/error-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="50MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- 채팅 서비스 전용 로거 (채팅 콘솔 + 파일) -->
+        <Logger name="com.blc.blc_backend.chat.service" level="DEBUG" additivity="false">
+            <AppenderRef ref="ChatConsole"/>
+            <AppenderRef ref="ChatFileAppender"/>
+        </Logger>
+
+        <!-- BLC 전체 패키지 로거 -->
+        <Logger name="com.blc.blc_backend" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileAppender"/>
+            <AppenderRef ref="ErrorFileAppender"/>
+        </Logger>
+
+        <!-- Spring Boot 관련 로거 -->
+        <Logger name="org.springframework" level="INFO" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileAppender"/>
+        </Logger>
+
+        <!-- WebSocket 로거 -->
+        <Logger name="org.springframework.web.socket" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileAppender"/>
+        </Logger>
+
+        <!-- 하이버네이트 SQL 로거 -->
+        <Logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileAppender"/>
+        </Logger>
+
+        <!-- 하이버네이트 파라미터 로거 -->
+        <Logger name="org.hibernate.orm.jdbc.bind" level="TRACE" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileAppender"/>
+        </Logger>
+
+        <!-- 루트 로거 -->
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileAppender"/>
+            <AppenderRef ref="ErrorFileAppender"/>
+        </Root>
+    </Loggers>
+</Configuration>
