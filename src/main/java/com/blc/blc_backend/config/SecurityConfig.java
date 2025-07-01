@@ -107,7 +107,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("http://localhost:5173")); // 추후 프론트 설정에 맞춰 변경 필요
+        cfg.setAllowedOrigins(List.of(
+                "http://localhost:5173",           // 로컬 개발
+                "http://13.209.49.84:8080",        // EC2 직접 접근
+                "https://*.vercel.app"             // Vercel 배포 (모든 서브도메인)
+        ));
         cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);
