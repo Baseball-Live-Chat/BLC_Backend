@@ -1,11 +1,14 @@
 package com.blc.blc_backend.config;
 
 import com.blc.blc_backend.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -14,6 +17,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -77,10 +81,22 @@ public class SecurityConfig {
                         .logoutUrl("/api/auth/logout")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID")
-                        .logoutSuccessHandler((req, res, auth) -> {
-                            // 302 리다이렉트를 완전히 막고 200만 내려줌
+                        .logoutSuccessHandler((HttpServletRequest req, HttpServletResponse res, Authentication auth) -> {
+                            // 1) HTTP 상태 200
                             res.setStatus(HttpServletResponse.SC_OK);
+
+                            // 2) JSESSIONID 만료용 쿠키 (로그인 쿠키와 동일한 속성으로)
+                            ResponseCookie deleteCookie = ResponseCookie.from("JSESSIONID", "")
+                                    .domain("blc.ai.kr")      // ← Application 탭에 찍힌 도메인
+                                    .path("/")                // ← 로그인 때 Path
+                                    .maxAge(0)                // ← 즉시 만료
+                                    .sameSite("None")         // ← 크로스사이트 XHR 허용
+                                    .secure(true)             // ← HTTPS 전용
+                                    .httpOnly(true)           // ← 로그인 때 HttpOnly 여부와 동일하게
+                                    .build();
+
+                            // Set-Cookie 헤더로 내리기
+                            res.setHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
                         })
                 )
         ;
