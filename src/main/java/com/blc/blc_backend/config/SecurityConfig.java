@@ -108,12 +108,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(List.of(
-                "http://localhost:5173",           // 로컬 개발
-                "https://localhost:5173",          // 로컬 HTTPS (필요시)
-                "http://13.209.49.84:8080",        // EC2 직접 접근
-                "https://blc.ai.kr",               // 본인 도메인
-                "https://*.web.app",               // Firebase 호스팅
-                "https://*.firebaseapp.com"        // Firebase 호스팅 추가 도메인
+                "http://localhost:5173",
+                "https://localhost:5173",
+                "http://13.209.49.84:8080",
+                "https://blc.ai.kr",
+                "https://blc-frontent.web.app",    // 구체적인 Firebase 도메인
+                "https://blc-frontent.firebaseapp.com"  // 구체적인 Firebase 도메인
         ));
         cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
