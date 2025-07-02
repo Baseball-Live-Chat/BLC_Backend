@@ -6,118 +6,83 @@ import com.blc.blc_backend.game.entity.Game;
 import com.blc.blc_backend.game.repository.GameRepository;
 import com.blc.blc_backend.team.entity.Team;
 import com.blc.blc_backend.team.repository.TeamRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ScheduleCrawlerService {
 
-    private static final String GAME_INFO_URL = "https://statiz.sporki.com/schedule/?m=daily&date=";
-    private static final String DATE_TIME_PATTERN = "yyyy-MM-dd";
-    private static final String NOT_FOUND_TEAM_ERROR_FORMAT = "%s 팀이 없습니다.";
+    // KBO Schedule API 엔드포인트
+    private static final String API_URL = "https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList";
 
     private final TeamRepository teamRepo;
     private final GameRepository gameRepo;
     private final ChatRoomService chatRoomService;
 
+    /**
+     * 지정된 날짜(date)의 경기 정보를 가져와 저장합니다.
+     */
     @Transactional
     public void crawlGameInfo(LocalDate date) {
         try {
-            Document doc = crawl(date);
-            List<GameInfo> gameInfos = getGameInfo(date, doc);
+            List<GameInfo> gameInfos = fetchGamesByDate(date);
             saveGameInfos(gameInfos);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error("일정 파싱 실패 (date={}):", date, e);
         }
     }
 
-    public Document crawl(LocalDate date) throws IOException {
-        String url = GAME_INFO_URL + date.format(DateTimeFormatter.ofPattern(DATE_TIME_PATTERN));
-        Document doc = Jsoup.connect(url)
-                // 1) 브라우저 User-Agent 흉내
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                        "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                        "Chrome/122.0.0.0 Safari/537.36")
-                // 2) 리퍼러(Referer) 헤더 설정
-                .referrer("https://statiz.sporki.com/")
-                .get();
-        return doc;
-    }
+    /**
+     * KBO API를 호출하여 주어진 날짜의 경기만 필터링해 파싱합니다.
+     */
+    private List<GameInfo> fetchGamesByDate(LocalDate date) throws Exception {
+        // 1) 폼 데이터 생성
+        String year  = date.format(DateTimeFormatter.ofPattern("yyyy"));
+        String month = date.format(DateTimeFormatter.ofPattern("MM"));
+        // teamId 빈 문자열로 하면 전체 팀
+        String form = "leId=1"
+                + "&srIdList=0,9,6"   // 0,9,6 = 정규시즌
+                + "&seasonId=" + year
+                + "&gameMonth=" + month
+                + "&teamId=";
 
-    private List<GameInfo> getGameInfo(LocalDate date, Document doc) {
-        List<GameInfo> gameInfos = new ArrayList<>();
+        // 2) HTTP 요청 준비
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(new URI(API_URL))
+                .header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .POST(HttpRequest.BodyPublishers.ofString(form))
+                .build();
 
-        Elements games = doc.select("div.box_type_boared div.item_box");
+        // 3) 동기 요청 및 응답 수신
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        String json = resp.body();
 
-        try {
-            for (Element gameBox : games) {
-                String headText = gameBox.selectFirst("div.sh_box div.box_head").text();
-                // 날짜/시간 (예: "정규06-15 17:00 (잠실) 경기전")
-                Matcher m = Pattern.compile("(\\d{2}-\\d{2})\\s+(\\d{2}:\\d{2})").matcher(headText);
-                if (!m.find()) continue;  // 형식이 다르면 스킵
+        List<GameInfo> gameInfos = parseTodayGamesFromJson(json);
 
-                String monthDay = m.group(1);
-                String timeStr = m.group(2);
-                LocalDateTime gameDateTime = LocalDateTime.of(
-                        date.withMonth(Integer.parseInt(monthDay.substring(0, 2)))
-                                .withDayOfMonth(Integer.parseInt(monthDay.substring(3, 5))),
-                        LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("HH:mm"))
-                );
-
-                // 구장 정보
-                m = Pattern.compile("\\(([^)]+)\\)").matcher(headText);
-                String stadium = m.find() ? m.group(1) : "";
-
-                // 팀 정보 파싱 (첫 번째 tr=원정, 두 번째 tr=홈)
-                Elements rows = gameBox.select("div.table_type03 table tbody tr");
-                if (rows.size() < 2) {
-                    continue;
-                }
-
-                String awayCode = rows.get(0)
-                        .selectFirst("td.align_left")
-                        .ownText()
-                        .trim();
-                String homeCode = rows.get(1)
-                        .selectFirst("td.align_left")
-                        .ownText()
-                        .trim();
-
-                GameInfo gameInfo = GameInfo.builder()
-                        .awayCode(awayCode)
-                        .homeCode(homeCode)
-                        .gameDateTime(gameDateTime)
-                        .stadium(stadium)
-                        .build();
-
-                log.info("[crawlGameInfo] {}]", gameInfo);
-                gameInfos.add(gameInfo);
-            }
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-            gameInfos = new ArrayList<>();
-        }
+        System.out.println(gameInfos);
         return gameInfos;
     }
 
+    /**
+     * 파싱된 GameInfo 리스트를 DB에 저장하고, 신규 경기마다 채팅방을 생성합니다.
+     */
     private void saveGameInfos(List<GameInfo> gameInfos) {
         for (GameInfo info : gameInfos) {
             Game saved = saveGame(info);
@@ -126,26 +91,88 @@ public class ScheduleCrawlerService {
     }
 
     private Game saveGame(GameInfo gameInfo) {
-        String awayCode = gameInfo.getAwayCode();
-        String homeCode = gameInfo.getHomeCode();
-        LocalDateTime gameDateTime = gameInfo.getGameDateTime();
-        String stadium = gameInfo.getStadium();
+        Team away = findTeam(gameInfo.getAwayCode());
+        Team home = findTeam(gameInfo.getHomeCode());
+        LocalDateTime dt = gameInfo.getGameDateTime();
 
-        Team away = findTeam(awayCode);
-        Team home = findTeam(homeCode);
-
-        if (gameRepo.existsByHomeTeamAndAwayTeamAndGameDate(home, away, gameDateTime)) {
+        // 이미 저장된 경기인지 체크
+        if (gameRepo.existsByHomeTeamAndAwayTeamAndGameDate(home, away, dt)) {
             return null;
         }
 
         Game game = Game.builder()
                 .homeTeam(home)
                 .awayTeam(away)
-                .gameDate(gameDateTime)
-                .stadium(stadium)
+                .gameDate(dt)
+                .stadium(gameInfo.getStadium())
                 .build();
 
         return gameRepo.save(game);
+    }
+
+    public List<GameInfo> parseTodayGamesFromJson(String json) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(json);
+        JsonNode rows = root.path("rows");
+
+        // 오늘 "MM.dd"
+        String todayStr = LocalDate.now(ZoneId.of("Asia/Seoul"))
+                .format(DateTimeFormatter.ofPattern("MM.dd"));
+        String currentDay = null;
+
+        List<GameInfo> gameInfos = new ArrayList<>();
+
+        for (JsonNode rowNode : rows) {
+            JsonNode cells = rowNode.path("row");
+            if (cells.isMissingNode() || cells.size() == 0) continue;
+
+            // 첫 번째 셀을 보고 'day'인지 판단
+            JsonNode first = cells.get(0);
+            boolean hasDay = "day".equals(first.path("Class").asText());
+
+            // 날짜 갱신 (hasDay == true 인 경우에만)
+            if (hasDay) {
+                String dateText = Jsoup.parse(first.path("Text").asText()).text();  // ex "07.02(수)"
+                currentDay = dateText.substring(0, 5);                            // "07.02"
+            }
+            // 오늘 날짜가 아니면 스킵
+            if (!todayStr.equals(currentDay)) continue;
+
+            // 컬럼 인덱스 결정
+            int timeIdx    = hasDay ? 1 : 0;
+            int playIdx    = hasDay ? 2 : 1;
+            int stadiumIdx = hasDay ? 7 : 6;
+
+            // 시간 파싱
+            String timeHtml = cells.get(timeIdx).path("Text").asText();        // ex "<b>18:30</b>"
+            String timeStr  = Jsoup.parse(timeHtml).text();                    // "18:30"
+            LocalTime time  = LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("HH:mm"));
+
+            // 팀 파싱
+            String playHtml = cells.get(playIdx).path("Text").asText();
+            String playText = Jsoup.parse(playHtml).text();                    // ex "삼성 4 vs 1 두산" or "LG vs 롯데"
+            String[] parts  = playText.split("vs");
+            if (parts.length < 2) continue;
+            String awayName = parts[0].replaceAll("\\d", "").trim();
+            String homeName = parts[1].replaceAll("\\d", "").trim();
+
+            // 구장
+            String stadiumHtml = cells.get(stadiumIdx).path("Text").asText();
+            String stadium     = Jsoup.parse(stadiumHtml).text();
+
+            // 오늘 날짜 + 시간 → LocalDateTime
+            LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+            LocalDateTime gameDateTime = LocalDateTime.of(today, time);
+
+            gameInfos.add(GameInfo.builder()
+                    .awayCode(awayName)
+                    .homeCode(homeName)
+                    .gameDateTime(gameDateTime)
+                    .stadium(stadium)
+                    .build());
+        }
+
+        return gameInfos;
     }
 
     private Team findTeam(String code) {

@@ -87,7 +87,6 @@ public class SecurityConfig {
 
                             // 2) JSESSIONID 만료용 쿠키 (로그인 쿠키와 동일한 속성으로)
                             ResponseCookie deleteCookie = ResponseCookie.from("JSESSIONID", "")
-                                    .domain("blcback.shop")      // ← Application 탭에 찍힌 도메인
                                     .path("/")                // ← 로그인 때 Path
                                     .maxAge(0)                // ← 즉시 만료
                                     .sameSite("None")         // ← 크로스사이트 XHR 허용
