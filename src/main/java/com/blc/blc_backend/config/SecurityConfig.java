@@ -1,11 +1,14 @@
 package com.blc.blc_backend.config;
 
 import com.blc.blc_backend.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -14,6 +17,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -77,10 +81,21 @@ public class SecurityConfig {
                         .logoutUrl("/api/auth/logout")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID")
-                        .logoutSuccessHandler((req, res, auth) -> {
-                            // 302 리다이렉트를 완전히 막고 200만 내려줌
+                        .logoutSuccessHandler((HttpServletRequest req, HttpServletResponse res, Authentication auth) -> {
+                            // 1) HTTP 상태 200
                             res.setStatus(HttpServletResponse.SC_OK);
+
+                            // 2) JSESSIONID 만료용 쿠키 (로그인 쿠키와 동일한 속성으로)
+                            ResponseCookie deleteCookie = ResponseCookie.from("JSESSIONID", "")
+                                    .path("/")                // ← 로그인 때 Path
+                                    .maxAge(0)                // ← 즉시 만료
+                                    .sameSite("None")         // ← 크로스사이트 XHR 허용
+                                    .secure(true)             // ← HTTPS 전용
+                                    .httpOnly(true)           // ← 로그인 때 HttpOnly 여부와 동일하게
+                                    .build();
+
+                            // Set-Cookie 헤더로 내리기
+                            res.setHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
                         })
                 )
         ;
@@ -107,10 +122,19 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("http://localhost:5173")); // 추후 프론트 설정에 맞춰 변경 필요
+        cfg.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://localhost:5173",
+                "http://13.209.49.84:8080",
+                "https://blc.ai.kr",
+                "https://blc-frontent.web.app",    // 구체적인 Firebase 도메인
+                "https://blc-frontent.firebaseapp.com",  // 구체적인 Firebase 도메인
+                "https://blcback.shop/chat-socket"
+        ));
         cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
         src.registerCorsConfiguration("/**", cfg);
         return src;
