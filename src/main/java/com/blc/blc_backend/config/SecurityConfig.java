@@ -87,7 +87,7 @@ public class SecurityConfig {
 
                             // 2) JSESSIONID 만료용 쿠키 (로그인 쿠키와 동일한 속성으로)
                             ResponseCookie deleteCookie = ResponseCookie.from("JSESSIONID", "")
-                                    .domain("blc.ai.kr")      // ← Application 탭에 찍힌 도메인
+                                    .domain("blcback.shop")      // ← Application 탭에 찍힌 도메인
                                     .path("/")                // ← 로그인 때 Path
                                     .maxAge(0)                // ← 즉시 만료
                                     .sameSite("None")         // ← 크로스사이트 XHR 허용
@@ -129,7 +129,8 @@ public class SecurityConfig {
                 "http://13.209.49.84:8080",
                 "https://blc.ai.kr",
                 "https://blc-frontent.web.app",    // 구체적인 Firebase 도메인
-                "https://blc-frontent.firebaseapp.com"  // 구체적인 Firebase 도메인
+                "https://blc-frontent.firebaseapp.com",  // 구체적인 Firebase 도메인
+                "https://blcback.shop/chat-socket"
         ));
         cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));

@@ -51,7 +51,14 @@ public class ScheduleCrawlerService {
 
     public Document crawl(LocalDate date) throws IOException {
         String url = GAME_INFO_URL + date.format(DateTimeFormatter.ofPattern(DATE_TIME_PATTERN));
-        Document doc = Jsoup.connect(url).get();
+        Document doc = Jsoup.connect(url)
+                // 1) 브라우저 User-Agent 흉내
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                        "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                        "Chrome/122.0.0.0 Safari/537.36")
+                // 2) 리퍼러(Referer) 헤더 설정
+                .referrer("https://statiz.sporki.com/")
+                .get();
         return doc;
     }
 
