@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
+    // Firebase Token 기반으로 변경
     private final AuthenticationManager authenticationManager;
 
     /**

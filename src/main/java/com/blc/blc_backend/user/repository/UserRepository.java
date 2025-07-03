@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
-
+// Firebase Token 기반으로 변경
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 

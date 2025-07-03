@@ -26,7 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Log4j2
 public class FirebaseAuthFilter extends OncePerRequestFilter {
-
+    // Firebase Token 기반으로 변경
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
     

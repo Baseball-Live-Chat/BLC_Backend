@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class FirebaseAuthenticationToken implements Authentication {
-
+    // Firebase Token 기반으로 변경
     private final String uid;
     private final String email;
     private final String name;

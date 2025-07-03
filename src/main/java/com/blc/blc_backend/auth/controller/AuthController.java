@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-
+    // Firebase Token 기반으로 변경
     private final UserSyncService userSyncService;
     private final UserRepository userRepository;
 

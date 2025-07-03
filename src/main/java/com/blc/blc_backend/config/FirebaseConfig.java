@@ -15,7 +15,7 @@ import java.io.InputStream;
 @Slf4j
 @Configuration
 public class FirebaseConfig {
-
+    // Firebase Token 기반으로 변경
     @Value("${firebase.config.path:firebase-service-account.json}")
     private String firebaseConfigPath;
 

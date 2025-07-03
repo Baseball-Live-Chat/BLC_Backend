@@ -10,7 +10,7 @@ import java.util.Collection;
  * Firebase 인증 토큰을 Spring Security의 Authentication 객체로 래핑하는 클래스
  */
 public class FirebaseAuthenticationToken extends AbstractAuthenticationToken {
-    
+    // Firebase Token 기반으로 변경
     private final Object principal;
     private final FirebaseToken firebaseToken;
     private final String token;

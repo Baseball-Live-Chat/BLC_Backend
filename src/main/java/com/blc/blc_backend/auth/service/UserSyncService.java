@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class UserSyncService {
-
+    // Firebase Token 기반으로 변경
     private final UserRepository userRepository;
 
     @Transactional
