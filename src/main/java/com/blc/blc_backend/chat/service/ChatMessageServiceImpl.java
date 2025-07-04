@@ -2,16 +2,20 @@ package com.blc.blc_backend.chat.service;
 
 import com.blc.blc_backend.chat.dto.ChatMessageRequestDto;
 import com.blc.blc_backend.chat.dto.ChatMessageResponseDto;
+import com.blc.blc_backend.chat.dto.RoomCountResponse;
 import com.blc.blc_backend.chat.entity.ChatMessage;
 import com.blc.blc_backend.chat.repository.ChatMessageRepository;
 import com.blc.blc_backend.user.dto.UserResponseDto;
 import com.blc.blc_backend.user.service.UserService;
+import com.blc.blc_backend.chat.repository.ChatMessageRepository.RoomTeamCount;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +26,24 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private static final String ANONYMOUS_NICKNAME = "익명";
     private final ChatMessageRepository repository;
     private final UserService userService;
+
+    public List<RoomCountResponse> getCountsForRooms(List<Long> roomIds) {
+        // 초기화
+        Map<Long, RoomCountResponse> map = roomIds.stream()
+                .collect(Collectors.toMap(id -> id, id -> new RoomCountResponse(id, 0L, 0L)));
+
+        // roomId x teamId(1=home,2=away)별 집계
+        List<RoomTeamCount> raw = repository.countByRoomIds(roomIds);
+        for (var rtc : raw) {
+            RoomCountResponse resp = map.get(rtc.getRoomId());
+            if (rtc.getTeamId() == 1L) {
+                resp.setHomeCount(rtc.getCnt());
+            } else if (rtc.getTeamId() == 2L) {
+                resp.setAwayCount(rtc.getCnt());
+            }
+        }
+        return new ArrayList<>(map.values());
+    }
 
     @Override
     public ChatMessageResponseDto createMessage(Long roomId, ChatMessageRequestDto dto) {

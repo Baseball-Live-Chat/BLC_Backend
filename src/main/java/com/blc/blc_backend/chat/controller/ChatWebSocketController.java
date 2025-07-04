@@ -2,6 +2,7 @@ package com.blc.blc_backend.chat.controller;
 
 import com.blc.blc_backend.chat.dto.ChatMessageRequestDto;
 import com.blc.blc_backend.chat.dto.ChatMessageResponseDto;
+import com.blc.blc_backend.chat.dto.CountsDeltaDto;
 import com.blc.blc_backend.chat.service.ChatMessageService;
 import com.blc.blc_backend.chatroom.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -19,6 +21,7 @@ public class ChatWebSocketController {
 
     private final ChatMessageService chatMessageService;
     private final ChatRoomService chatRoomService;
+    private final SimpMessagingTemplate simpMessagingTemplate;  // 추가
 
     /**
      * 경기별 채팅방 메시지 전송
@@ -26,20 +29,33 @@ public class ChatWebSocketController {
      */
     @MessageMapping("/chat.sendMessage/{gameId}")
     @SendTo("/topic/game/{gameId}")
-    public ChatMessageResponseDto sendGameMessage(
+    public ChatMessageResponseDto sendMessage(
             @DestinationVariable Long gameId,
-            @Payload ChatMessageRequestDto messageRequest) {
-
+            @Payload ChatMessageRequestDto messageRequest
+    ) {
+  
         log.debug("경기별 채팅방 메시지 수신: gameId={}, teamId={}, content='{}'",
                 gameId, messageRequest.getTeamId(), messageRequest.getContent());
+        // 1) 메시지 저장 & DTO 변환
+        ChatMessageResponseDto msg = chatMessageService.createMessage(
+                chatRoomService.getRoomIdByGameId(gameId),
+                messageRequest
+        );
 
-        try {
-            Long roomId = chatRoomService.getRoomIdByGameId(gameId);
-            return chatMessageService.createMessage(roomId, messageRequest);
-        } catch (Exception e) {
-            log.error("경기별 채팅방 메시지 처리 실패: gameId={}", gameId, e);
-            throw e;
-        }
+        // 2) teamId → home/away 타입 매핑
+        String type = (msg.getTeamId() != null && msg.getTeamId() == 1L)
+                ? "home"
+                : "away";
+
+        // 3) 델타만 브로드캐스트
+        CountsDeltaDto delta = new CountsDeltaDto(msg.getRoomId(), type);
+        simpMessagingTemplate.convertAndSend(
+                "/topic/game/" + gameId + "/counts-delta",
+                delta
+        );
+
+        // 4) 원래 구독자에게도 ChatMessageResponseDto 전송
+        return msg;
     }
 
     /**
