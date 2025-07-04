@@ -14,7 +14,7 @@ public class ChatRoomResponse {
     public static ChatRoomResponse of(ChatRoom room) {
         ChatRoomResponse dto = new ChatRoomResponse();
         dto.roomId = room.getRoomId();
-        dto.gameId = room.getGame().getGameId();
+        dto.gameId = room.getGame() != null ? room.getGame().getGameId() : null;  //  수정
         dto.roomName = room.getRoomName();
         dto.isActive = room.getIsActive();
         dto.maxParticipants = room.getMaxParticipants();
