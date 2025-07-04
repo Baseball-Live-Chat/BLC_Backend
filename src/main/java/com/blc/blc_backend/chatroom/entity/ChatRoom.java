@@ -17,7 +17,7 @@ public class ChatRoom {
     private Long roomId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "game_id", nullable = false, unique = true)
+    @JoinColumn(name = "game_id", nullable = true, unique = true)
     private Game game;
 
     @Column(nullable = false, length = 200)
@@ -32,8 +32,13 @@ public class ChatRoom {
     public ChatRoom(Game game, String roomName, Boolean isActive, Integer maxParticipants) {
         this.game = game;
         this.roomName = roomName;
-        this.isActive = isActive;
-        this.maxParticipants = maxParticipants;
+        this.isActive = isActive != null ? isActive : true;
+        this.maxParticipants = maxParticipants != null ? maxParticipants : 10000;
+    }
+
+    //  추가: 고정 채팅방인지 확인하는 메서드
+    public boolean isGeneralChatRoom() {
+        return this.game == null;
     }
 
     public void updateRoomName(String roomName) {

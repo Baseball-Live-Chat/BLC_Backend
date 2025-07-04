@@ -20,16 +20,51 @@ public class ChatWebSocketController {
     private final ChatMessageService chatMessageService;
     private final ChatRoomService chatRoomService;
 
+    /**
+     * 경기별 채팅방 메시지 전송
+     * /app/chat.sendMessage/{gameId}
+     */
     @MessageMapping("/chat.sendMessage/{gameId}")
     @SendTo("/topic/game/{gameId}")
-    public ChatMessageResponseDto  sendMessage(@DestinationVariable Long gameId,@Payload ChatMessageRequestDto messageRequest) {
-        Long roomId = chatRoomService.getRoomIdByGameId(gameId);
-        return chatMessageService.createMessage(roomId, messageRequest);
+    public ChatMessageResponseDto sendGameMessage(
+            @DestinationVariable Long gameId,
+            @Payload ChatMessageRequestDto messageRequest) {
+
+        log.debug("경기별 채팅방 메시지 수신: gameId={}, teamId={}, content='{}'",
+                gameId, messageRequest.getTeamId(), messageRequest.getContent());
+
+        try {
+            Long roomId = chatRoomService.getRoomIdByGameId(gameId);
+            return chatMessageService.createMessage(roomId, messageRequest);
+        } catch (Exception e) {
+            log.error("경기별 채팅방 메시지 처리 실패: gameId={}", gameId, e);
+            throw e;
+        }
     }
 
-    @MessageMapping("/chat.join/{roomId}") //채팅방 참여 인원 체크로 필요할 수도?
+    /**
+     * 🆕 고정 채팅방 메시지 전송
+     * /app/chat.sendMessage/room/{roomId}
+     */
+    @MessageMapping("/chat.sendMessage/room/{roomId}")
+    @SendTo("/topic/room/{roomId}")
+    public ChatMessageResponseDto sendRoomMessage(
+            @DestinationVariable Long roomId,
+            @Payload ChatMessageRequestDto messageRequest) {
+
+        log.debug("고정 채팅방 메시지 수신: roomId={}, teamId={}, content='{}'",
+                roomId, messageRequest.getTeamId(), messageRequest.getContent());
+
+        try {
+            return chatMessageService.createMessage(roomId, messageRequest);
+        } catch (Exception e) {
+            log.error("고정 채팅방 메시지 처리 실패: roomId={}", roomId, e);
+            throw e;
+        }
+    }
+
+    @MessageMapping("/chat.join/{roomId}")
     public void joinChat(@DestinationVariable String roomId, @Payload String message) {
-
+        // 채팅방 참여 로직 (필요시 구현)
     }
-
 }
