@@ -1,9 +1,11 @@
 package com.blc.blc_backend.chatroom.service;
 
+import com.blc.blc_backend.chatroom.dto.ChatRoomDetailResponse;
 import com.blc.blc_backend.chatroom.dto.ChatRoomRequest;
 import com.blc.blc_backend.chatroom.dto.ChatRoomResponse;
 import com.blc.blc_backend.chatroom.entity.ChatRoom;
 import com.blc.blc_backend.chatroom.repository.ChatRoomRepository;
+import com.blc.blc_backend.game.dto.GameDetailInfo;
 import com.blc.blc_backend.game.entity.Game;
 import com.blc.blc_backend.game.repository.GameRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -44,6 +46,27 @@ public class ChatRoomService {
         return ChatRoomResponse.of(saved);
     }
 
+    // 추가: 고정 채팅방 생성 메서드
+    @Transactional
+    public ChatRoomResponse createGeneralChatRoom(String roomName) {
+        // 이미 고정 채팅방이 있는지 확인
+        Optional<ChatRoom> existing = chatRoomRepository.findGeneralChatRoom();
+        if (existing.isPresent()) {
+            throw new IllegalStateException("General chat room already exists");
+        }
+
+        ChatRoom room = ChatRoom.builder()
+                .game(null)  // 고정 채팅방은 game이 null
+                .roomName(roomName)
+                .isActive(true)
+                .maxParticipants(50000)  // 고정 채팅방은 더 큰 수용량
+                .build();
+
+        ChatRoom saved = chatRoomRepository.save(room);
+        return ChatRoomResponse.of(saved);
+    }
+
+
     // 2) 단건 조회
     @Transactional(readOnly = true)
     public ChatRoomResponse getById(Long roomId) {
@@ -56,6 +79,21 @@ public class ChatRoomService {
     @Transactional(readOnly = true)
     public List<ChatRoomResponse> getAllActive() {
         return chatRoomRepository.findByIsActiveTrue().stream()
+                .map(ChatRoomResponse::of)
+                .toList();
+    }
+
+    // 추가: 고정 채팅방만 조회
+    @Transactional(readOnly = true)
+    public Optional<ChatRoomResponse> getGeneralChatRoom() {
+        return chatRoomRepository.findGeneralChatRoom()
+                .map(ChatRoomResponse::of);
+    }
+
+    // 추가: 경기별 채팅방만 조회
+    @Transactional(readOnly = true)
+    public List<ChatRoomResponse> getGameChatRooms() {
+        return chatRoomRepository.findGameChatRooms().stream()
                 .map(ChatRoomResponse::of)
                 .toList();
     }
@@ -107,4 +145,59 @@ public class ChatRoomService {
 
         return chatRoom.getRoomId();
     }
+    // 추가: 고정 채팅방의 roomId 조회
+    public Long getGeneralChatRoomId() {
+        ChatRoom generalRoom = chatRoomRepository.findGeneralChatRoom()
+                .orElseThrow(() -> new EntityNotFoundException("General chat room not found"));
+        return generalRoom.getRoomId();
+    }
+
+    /**
+     * 채팅방 상세 조회 (게임 정보 포함)
+     */
+    @Transactional(readOnly = true)
+    public ChatRoomDetailResponse getChatRoomDetail(Long roomId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("Room not found: " + roomId));
+
+        if (room.getGame() == null) {
+            // 고정 채팅방인 경우
+            return ChatRoomDetailResponse.builder()
+                    .roomId(room.getRoomId())
+                    .gameId(null)
+                    .roomName(room.getRoomName())
+                    .isActive(room.getIsActive())
+                    .maxParticipants(room.getMaxParticipants())
+                    .isGeneralRoom(true)
+                    .gameInfo(null)  // 게임 정보 없음
+                    .build();
+        } else {
+            // 경기별 채팅방인 경우
+            Game game = room.getGame();
+
+            // Game을 GameDetailInfo로 변환
+            GameDetailInfo gameDetailInfo = GameDetailInfo.builder()
+                    .gameId(game.getGameId())
+                    .homeTeamName(game.getHomeTeam().getTeamName())
+                    .homeCode(game.getHomeTeam().getTeamCode())
+                    .homeLogoUrl(game.getHomeTeam().getLogoUrl())
+                    .awayTeamName(game.getAwayTeam().getTeamName())
+                    .awayCode(game.getAwayTeam().getTeamCode())
+                    .awayLogoUrl(game.getAwayTeam().getLogoUrl())
+                    .gameDateTime(game.getGameDate())
+                    .stadium(game.getStadium())
+                    .build();
+
+            return ChatRoomDetailResponse.builder()
+                    .roomId(room.getRoomId())
+                    .gameId(game.getGameId())
+                    .roomName(room.getRoomName())
+                    .isActive(room.getIsActive())
+                    .maxParticipants(room.getMaxParticipants())
+                    .isGeneralRoom(false)
+                    .gameInfo(gameDetailInfo)
+                    .build();
+        }
+    }
+
 }

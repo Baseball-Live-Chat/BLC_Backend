@@ -23,12 +23,19 @@ public class ChatWebSocketController {
     private final ChatRoomService chatRoomService;
     private final SimpMessagingTemplate simpMessagingTemplate;  // 추가
 
+    /**
+     * 경기별 채팅방 메시지 전송
+     * /app/chat.sendMessage/{gameId}
+     */
     @MessageMapping("/chat.sendMessage/{gameId}")
     @SendTo("/topic/game/{gameId}")
     public ChatMessageResponseDto sendMessage(
             @DestinationVariable Long gameId,
             @Payload ChatMessageRequestDto messageRequest
     ) {
+  
+        log.debug("경기별 채팅방 메시지 수신: gameId={}, teamId={}, content='{}'",
+                gameId, messageRequest.getTeamId(), messageRequest.getContent());
         // 1) 메시지 저장 & DTO 변환
         ChatMessageResponseDto msg = chatMessageService.createMessage(
                 chatRoomService.getRoomIdByGameId(gameId),
@@ -51,9 +58,29 @@ public class ChatWebSocketController {
         return msg;
     }
 
-    @MessageMapping("/chat.join/{roomId}") //채팅방 참여 인원 체크로 필요할 수도?
-    public void joinChat(@DestinationVariable String roomId, @Payload String message) {
+    /**
+     * 🆕 고정 채팅방 메시지 전송
+     * /app/chat.sendMessage/room/{roomId}
+     */
+    @MessageMapping("/chat.sendMessage/room/{roomId}")
+    @SendTo("/topic/room/{roomId}")
+    public ChatMessageResponseDto sendRoomMessage(
+            @DestinationVariable Long roomId,
+            @Payload ChatMessageRequestDto messageRequest) {
 
+        log.debug("고정 채팅방 메시지 수신: roomId={}, teamId={}, content='{}'",
+                roomId, messageRequest.getTeamId(), messageRequest.getContent());
+
+        try {
+            return chatMessageService.createMessage(roomId, messageRequest);
+        } catch (Exception e) {
+            log.error("고정 채팅방 메시지 처리 실패: roomId={}", roomId, e);
+            throw e;
+        }
     }
 
+    @MessageMapping("/chat.join/{roomId}")
+    public void joinChat(@DestinationVariable String roomId, @Payload String message) {
+        // 채팅방 참여 로직 (필요시 구현)
+    }
 }
