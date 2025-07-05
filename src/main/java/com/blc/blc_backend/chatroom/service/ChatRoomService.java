@@ -126,7 +126,7 @@ public class ChatRoomService {
      * @return 활성화된 채팅방이 있으면 true, 없으면 false
      */
     public boolean isActiveChatRoomForGame(Long gameId) {
-        return chatRoomRepository.existsByGameIdAndIsActiveTrue(gameId);
+        return chatRoomRepository.existsByGameGameIdAndIsActiveTrue(gameId);
     }
 
     /**
