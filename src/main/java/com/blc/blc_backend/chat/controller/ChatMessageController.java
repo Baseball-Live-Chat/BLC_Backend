@@ -3,6 +3,7 @@ package com.blc.blc_backend.chat.controller;
 
 import com.blc.blc_backend.chat.dto.ChatMessageRequestDto;
 import com.blc.blc_backend.chat.dto.ChatMessageResponseDto;
+import com.blc.blc_backend.chat.dto.RoomCountResponse;
 import com.blc.blc_backend.chat.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,5 +33,12 @@ public class ChatMessageController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(messages);
+    }
+
+    @GetMapping("/rooms/counts")
+    public List<RoomCountResponse> getCounts(
+            @RequestParam List<Long> roomIds
+    ) {
+        return chatMessageService.getCountsForRooms(roomIds);
     }
 }
