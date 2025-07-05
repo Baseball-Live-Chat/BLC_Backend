@@ -35,5 +35,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
      * @return room
      */
     ChatRoom findChatRoomByGame_GameId(Long gameId);
+
+    /**
+     * 주어진 gameId 에 해당하는 활성화된(ChatRoom.isActive = true) 방이 존재하는지 여부
+     * @param gameId 조회할 Game ID
+     * @return 존재하면 true
+     */
+    boolean existsByGameIdAndIsActiveTrue(Long gameId);
 }
 

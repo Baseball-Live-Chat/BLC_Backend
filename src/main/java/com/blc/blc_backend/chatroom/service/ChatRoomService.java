@@ -120,6 +120,16 @@ public class ChatRoomService {
     }
 
     /**
+     * 지정된 게임(gameId)에 대해 활성화된 채팅방이 존재하는지 확인합니다.
+     *
+     * @param gameId 조회할 게임의 ID
+     * @return 활성화된 채팅방이 있으면 true, 없으면 false
+     */
+    public boolean isActiveChatRoomForGame(Long gameId) {
+        return chatRoomRepository.existsByGameIdAndIsActiveTrue(gameId);
+    }
+
+    /**
      * 주어진 날짜(date) 이전에 열린 게임의 채팅방들 중 활성화된 것들을 모두 비활성화합니다.
      *
      * @param date 기준일자 (이 날짜의 00:00 이전 게임만 비활성화 대상)
