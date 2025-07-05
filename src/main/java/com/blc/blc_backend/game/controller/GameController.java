@@ -37,7 +37,7 @@ public class GameController {
     @GetMapping("/{gameId}")
     public ResponseEntity<GameDetailInfo> getGameById(@PathVariable Long gameId) {
         try {
-            GameDetailInfo gameDetailInfo = gameService.getGameDetailById(gameId);
+            GameDetailInfo gameDetailInfo = gameService.getActiveGameDetail(gameId);
             return ResponseEntity.ok(gameDetailInfo);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();

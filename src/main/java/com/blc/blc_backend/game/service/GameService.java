@@ -1,5 +1,6 @@
 package com.blc.blc_backend.game.service;
 
+import com.blc.blc_backend.chatroom.service.ChatRoomService;
 import com.blc.blc_backend.game.dto.GameInfo;
 import com.blc.blc_backend.game.dto.GameDetailInfo;
 import com.blc.blc_backend.game.dto.GameListRequest;
@@ -15,6 +16,7 @@ import java.util.List;
 public class GameService {
 
     private final GameMapper gameMapper;
+    private final ChatRoomService chatRoomService;
 
     /**
      * 전체 경기 리스트 조회 (페이징, 필터링)
@@ -39,10 +41,13 @@ public class GameService {
     /**
      * 특정 경기 상세 조회
      */
-    public GameDetailInfo getGameDetailById(Long gameId) {
+    public GameDetailInfo getActiveGameDetail(Long gameId) {
         GameDetailInfo gameDetailInfo = gameMapper.findGameDetailById(gameId);
         if (gameDetailInfo == null) {
             throw new IllegalArgumentException("해당 경기를 찾을 수 없습니다. ID: " + gameId);
+        }
+        if(!chatRoomService.isActiveChatRoomForGame(gameDetailInfo.getGameId())) {
+            throw new IllegalArgumentException("비활성화된 경기입니다. ID: " + gameId);
         }
         return gameDetailInfo;
     }
