@@ -15,8 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,7 +95,20 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
     @Override
     public List<RoomCountResponse> getCountsForRooms(List<Long> roomIds) {
-        // 기존 구현 유지...
-        return null; // 실제 구현은 기존 코드 참조
+        // 초기화
+        Map<Long, RoomCountResponse> map = roomIds.stream()
+                .collect(Collectors.toMap(id -> id, id -> new RoomCountResponse(id, 0L, 0L)));
+
+        // roomId x teamId(1=home,2=away)별 집계
+        List<ChatMessageRepository.RoomTeamCount> raw = repository.countByRoomIds(roomIds);
+        for (var rtc : raw) {
+            RoomCountResponse resp = map.get(rtc.getRoomId());
+            if (rtc.getTeamId() == 1L) {
+                resp.setHomeCount(rtc.getCnt());
+            } else if (rtc.getTeamId() == 2L) {
+                resp.setAwayCount(rtc.getCnt());
+            }
+        }
+        return new ArrayList<>(map.values());
     }
 }
