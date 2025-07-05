@@ -97,17 +97,25 @@ public class BettingServiceImpl implements BettingService {
         List<GameBet> userBets = gameBetRepository.findByUserIdAndGameIdAndSettledAtIsNull(userId, gameId);
 
         int totalBetPoints = userBets.stream().mapToInt(GameBet::getBetPoints).sum();
-        int remainingPoints = MAX_BET_POINTS - totalBetPoints;
+
+        // 게임 베팅 한도에서 남은 금액
+        int gameRemainingPoints = MAX_BET_POINTS - totalBetPoints;
+
+        // 사용자가 실제 보유한 포인트
+        Long userCurrentPoints = userService.getUserPoints(userId);
+
+        // 실제 베팅 가능한 포인트는 둘 중 작은 값
+        int actualRemainingPoints = Math.min(gameRemainingPoints, userCurrentPoints.intValue());
 
         Long predictedTeamId = userBets.isEmpty() ? null : userBets.get(0).getPredictedWinnerTeamId();
 
         return UserBetStatusDto.builder()
                 .gameId(gameId)
                 .totalBetPoints(totalBetPoints)
-                .remainingPoints(Math.max(0, remainingPoints))
+                .remainingPoints(Math.max(0, actualRemainingPoints))  // 음수 방지
                 .predictedWinnerTeamId(predictedTeamId)
                 .betCount(userBets.size())
-                .canBet(remainingPoints >= MIN_SINGLE_BET)
+                .canBet(actualRemainingPoints >= MIN_SINGLE_BET)
                 .build();
     }
 
