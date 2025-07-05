@@ -33,6 +33,13 @@ public class User {
 
     private Long favoriteTeamId;
 
+    @Column(nullable = false)
+    private Long points = 0L;  // 포인트 (기본값 0)
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole userRole = UserRole.USER;  // 권한 (기본값 USER)
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -46,5 +53,20 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void addPoints(long points) {
+        this.points += points;
+    }
+
+    public void subtractPoints(long points) {
+        if (this.points < points) {
+            throw new IllegalArgumentException("포인트가 부족합니다");
+        }
+        this.points -= points;
+    }
+
+    public boolean hasEnoughPoints(long requiredPoints) {
+        return this.points >= requiredPoints;
     }
 }
