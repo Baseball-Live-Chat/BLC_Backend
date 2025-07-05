@@ -7,8 +7,6 @@ import com.blc.blc_backend.betting.entity.GameBet;
 import com.blc.blc_backend.betting.repository.GameBetRepository;
 import com.blc.blc_backend.game.entity.Game;
 import com.blc.blc_backend.game.repository.GameRepository;
-import com.blc.blc_backend.user.entity.User;
-import com.blc.blc_backend.user.repository.UserRepository;
 import com.blc.blc_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +25,6 @@ public class BettingServiceImpl implements BettingService {
 
     private final GameBetRepository gameBetRepository;
     private final GameRepository gameRepository;
-    private final UserRepository userRepository;
     private final UserService userService;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -126,7 +122,7 @@ public class BettingServiceImpl implements BettingService {
         }
 
         if (winnerTeamId == null) {
-            handleDrawGame(unsettledBets);
+            handleDrawOrCancelledGame(unsettledBets);
             return;
         }
 
@@ -163,7 +159,7 @@ public class BettingServiceImpl implements BettingService {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("경기를 찾을 수 없습니다"));
 
-        if (game.getGameDate().isBefore(LocalDateTime.now().plusHours(1))) {
+        if (game.getGameDate().isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("베팅 시간이 마감되었습니다");
         }
 
@@ -174,12 +170,10 @@ public class BettingServiceImpl implements BettingService {
         }
 
         // 7. 사용자 포인트 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-
-        if (user.getPoints() < betPoints) {
+        if (!userService.hasEnoughPoints(userId, betPoints)) {
+            Long currentPoints = userService.getUserPoints(userId);
             throw new IllegalStateException(
-                    String.format("포인트가 부족합니다. 보유: %dP, 필요: %dP", user.getPoints(), betPoints));
+                    String.format("포인트가 부족합니다. 보유: %dP, 필요: %dP", currentPoints, betPoints));
         }
     }
 
@@ -195,19 +189,11 @@ public class BettingServiceImpl implements BettingService {
     }
 
     private void subtractUserPoints(Long userId, int points) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-
-        user.setPoints(user.getPoints() - points);
-        userRepository.save(user);
+        userService.subtractUserPoints(userId, points);
     }
 
     private void addUserPoints(Long userId, int points) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-
-        user.setPoints(user.getPoints() + points);
-        userRepository.save(user);
+        userService.addUserPoints(userId, points);
     }
 
     private void broadcastBettingUpdate(Long gameId) {
@@ -219,7 +205,7 @@ public class BettingServiceImpl implements BettingService {
         }
     }
 
-    private void handleDrawGame(List<GameBet> bets) {
+    private void handleDrawOrCancelledGame(List<GameBet> bets) {
         LocalDateTime now = LocalDateTime.now();
         for (GameBet bet : bets) {
             addUserPoints(bet.getUserId(), bet.getBetPoints());
@@ -231,7 +217,7 @@ public class BettingServiceImpl implements BettingService {
     private void handleWinLoseGame(List<GameBet> bets, Long winnerTeamId) {
         List<GameBet> winningBets = bets.stream()
                 .filter(bet -> bet.getPredictedWinnerTeamId().equals(winnerTeamId))
-                .collect(Collectors.toList());
+                .toList();
 
         if (winningBets.isEmpty()) {
             markBetsAsSettled(bets);

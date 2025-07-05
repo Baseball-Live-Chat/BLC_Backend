@@ -1,5 +1,6 @@
 package com.blc.blc_backend.user.dto;
 
+import com.blc.blc_backend.user.entity.UserRole;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,6 +15,8 @@ public class UserResponseDto {
     private String nickname;
     private String profileImageUrl;
     private Long favoriteTeamId;
+    private Long points;                // 보유 포인트
+    private UserRole userRole;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
