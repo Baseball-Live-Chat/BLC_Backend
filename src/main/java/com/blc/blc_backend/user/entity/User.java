@@ -33,9 +33,11 @@ public class User {
 
     private Long favoriteTeamId;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long points = 0L;  // 포인트 (기본값 0)
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole userRole = UserRole.USER;  // 권한 (기본값 USER)

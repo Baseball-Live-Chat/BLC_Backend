@@ -31,10 +31,10 @@ public interface GameBetRepository extends JpaRepository<GameBet, Long> {
         SELECT 
             SUM(CASE WHEN predicted_winner_team_id = :homeTeamId THEN bet_points ELSE 0 END) as homePoints,
             SUM(CASE WHEN predicted_winner_team_id = :awayTeamId THEN bet_points ELSE 0 END) as awayPoints,
-            SUM(CASE WHEN predicted_winner_team_id = :homeTeamId THEN 1 ELSE 0 END) as homeCount,
-            SUM(CASE WHEN predicted_winner_team_id = :awayTeamId THEN 1 ELSE 0 END) as awayCount,
+            COUNT(DISTINCT CASE WHEN predicted_winner_team_id = :homeTeamId THEN user_id END) as homeCount,
+            COUNT(DISTINCT CASE WHEN predicted_winner_team_id = :awayTeamId THEN user_id END) as awayCount,
             SUM(bet_points) as totalPoints,
-            COUNT(*) as totalCount
+            COUNT(DISTINCT user_id) as totalCount
         FROM game_bets 
         WHERE game_id = :gameId AND settled_at IS NULL
         """, nativeQuery = true)
