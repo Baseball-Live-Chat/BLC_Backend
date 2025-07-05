@@ -20,7 +20,7 @@ public class UserAttendanceController {
 
     /**
      * 특정 달 출석 날짜 조회
-     * GET /api/games?year=2024&month=01&userId=1
+     * GET /api/attendance?year=2025&month=01&userName=kkh
      */
     @GetMapping
     public ResponseEntity<UserAttendanceResponse> getUserAttendance(UserAttendanceRequest request) {

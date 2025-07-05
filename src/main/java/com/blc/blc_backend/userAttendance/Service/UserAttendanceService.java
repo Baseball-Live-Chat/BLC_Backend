@@ -58,9 +58,12 @@ public class UserAttendanceService {
         LocalDate start = ym.atDay(1);
         LocalDate end   = ym.atEndOfMonth();
 
+        // 0) user Id 조회
+        Long userId = userService.getUserIdByUsername(request.getUserName());
+
         // 1) 해당 기간 중 출석된 엔티티만 조회
         List<UserAttendance> attendanceList = attendanceRepo
-                .findAllByUserIdAndAttendDateBetween(request.getUserId(), start, end);
+                .findAllByUserIdAndAttendDateBetween(userId, start, end);
 
         // 2) LocalDate 리스트로 변환
         List<LocalDate> attendDates = attendanceList.stream()
@@ -70,7 +73,7 @@ public class UserAttendanceService {
 
         // 3) Response 조립
         UserAttendanceResponse resp = new UserAttendanceResponse();
-        resp.setUserId(request.getUserId());
+        resp.setUserName(request.getUserName());
         resp.setAttendDates(attendDates);
         return resp;
     }
