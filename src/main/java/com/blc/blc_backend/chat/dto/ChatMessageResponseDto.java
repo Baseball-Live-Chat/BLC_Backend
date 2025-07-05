@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 public class ChatMessageResponseDto {
+    private Long roomId;
     private Long userId;
     private String nickname;
     private Long teamId;
@@ -22,6 +23,7 @@ public class ChatMessageResponseDto {
     private LocalDateTime createdAt;
 
     public ChatMessageResponseDto(ChatMessage entity, String nickname) {
+        this.roomId = entity.getRoomId();
         this.userId = entity.getUserId();
         this.nickname = nickname;
         this.teamId = entity.getTeamId();

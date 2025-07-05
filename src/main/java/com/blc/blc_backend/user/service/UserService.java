@@ -5,6 +5,7 @@ import com.blc.blc_backend.user.dto.UserResponseDto;
 import com.blc.blc_backend.user.entity.User;
 import com.blc.blc_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -170,5 +172,52 @@ public class UserService {
                     "이미 사용 중인 닉네임입니다."
             );
         }
+    }
+
+    // ✅ 베팅 시스템용 새 메서드들
+    @Transactional(readOnly = true)
+    public Long getUserIdByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + username));
+        return user.getUserId();
+    }
+
+    public void addUserPoints(Long userId, long points) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+
+        user.addPoints(points);
+        userRepository.save(user);
+
+        log.debug("포인트 지급 - userId: {}, 지급액: {}, 잔액: {}", userId, points, user.getPoints());
+    }
+
+    public void subtractUserPoints(Long userId, long points) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+
+        if (!user.hasEnoughPoints(points)) {
+            throw new IllegalArgumentException(
+                    String.format("포인트가 부족합니다. 보유: %d, 필요: %d", user.getPoints(), points));
+        }
+
+        user.subtractPoints(points);
+        userRepository.save(user);
+
+        log.debug("포인트 차감 - userId: {}, 차감액: {}, 잔액: {}", userId, points, user.getPoints());
+    }
+
+    @Transactional(readOnly = true)
+    public Long getUserPoints(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+        return user.getPoints();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasEnoughPoints(Long userId, long points) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+        return user.hasEnoughPoints(points);
     }
 }
