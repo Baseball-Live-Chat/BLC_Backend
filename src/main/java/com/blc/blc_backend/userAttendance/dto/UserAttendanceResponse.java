@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class UserAttendanceResponse {
-    private String userName;
+    private String nickname;
     /** 출석한 날짜 리스트(yyyy-MM-dd 형식) */
     private List<LocalDate> attendDates;
 }

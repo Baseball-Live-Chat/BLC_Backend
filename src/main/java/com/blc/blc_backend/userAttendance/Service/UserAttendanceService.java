@@ -1,5 +1,6 @@
 package com.blc.blc_backend.userAttendance.Service;
 
+import com.blc.blc_backend.user.dto.UserResponseDto;
 import com.blc.blc_backend.user.service.UserService;
 import com.blc.blc_backend.userAttendance.dto.UserAttendanceRequest;
 import com.blc.blc_backend.userAttendance.dto.UserAttendanceResponse;
@@ -53,17 +54,17 @@ public class UserAttendanceService {
     /**
      * 요청된 year, month, userId 에 해당하는 일별 출석 현황을 반환
      */
-    public UserAttendanceResponse getUserAttendance(UserAttendanceRequest request) {
+    public UserAttendanceResponse getUserAttendance(UserAttendanceRequest request, String userName) {
         YearMonth ym = YearMonth.of(request.getYear(), request.getMonth());
         LocalDate start = ym.atDay(1);
         LocalDate end   = ym.atEndOfMonth();
 
         // 0) user Id 조회
-        Long userId = userService.getUserIdByUsername(request.getUserName());
+        UserResponseDto dto = userService.getUserByUsername(userName);
 
         // 1) 해당 기간 중 출석된 엔티티만 조회
         List<UserAttendance> attendanceList = attendanceRepo
-                .findAllByUserIdAndAttendDateBetween(userId, start, end);
+                .findAllByUserIdAndAttendDateBetween(dto.getUserId(), start, end);
 
         // 2) LocalDate 리스트로 변환
         List<LocalDate> attendDates = attendanceList.stream()
@@ -73,7 +74,7 @@ public class UserAttendanceService {
 
         // 3) Response 조립
         UserAttendanceResponse resp = new UserAttendanceResponse();
-        resp.setUserName(request.getUserName());
+        resp.setNickname(dto.getNickname());
         resp.setAttendDates(attendDates);
         return resp;
     }

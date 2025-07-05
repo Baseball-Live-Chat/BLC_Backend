@@ -8,5 +8,4 @@ import lombok.Setter;
 public class UserAttendanceRequest {
     private int year;
     private int month;
-    private String userName;
 }

@@ -5,6 +5,7 @@ import com.blc.blc_backend.userAttendance.dto.UserAttendanceRequest;
 import com.blc.blc_backend.userAttendance.dto.UserAttendanceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,9 +24,14 @@ public class UserAttendanceController {
      * GET /api/attendance?year=2025&month=01&userName=kkh
      */
     @GetMapping
-    public ResponseEntity<UserAttendanceResponse> getUserAttendance(UserAttendanceRequest request) {
+    public ResponseEntity<UserAttendanceResponse> getUserAttendance(
+            UserAttendanceRequest request,
+            Authentication authentication
+        ) {
         try {
-            UserAttendanceResponse response = userAttendanceService.getUserAttendance(request);
+            if(authentication == null) throw new IllegalArgumentException("로그인 필요");
+            String username = authentication.getName();
+            UserAttendanceResponse response = userAttendanceService.getUserAttendance(request, username);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
