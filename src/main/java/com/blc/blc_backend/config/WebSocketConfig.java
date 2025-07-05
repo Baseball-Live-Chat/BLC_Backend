@@ -19,9 +19,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // WebSocket 엔드포인트 등록
+        // 기존 채팅용 엔드포인트
         registry.addEndpoint("/chat-socket")
-                .setAllowedOriginPatterns("*") // 개발 환경에서는 모든 도메인 허용
-                .withSockJS(); // SockJS 지원 추가
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+
+        // 베팅용 엔드포인트 추가 (같은 설정 사용)
+        registry.addEndpoint("/betting-socket")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 }
