@@ -135,6 +135,8 @@ public class UserService {
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfileImageUrl())
                 .favoriteTeamId(user.getFavoriteTeamId())
+                .points(user.getPoints())
+                .userRole(user.getUserRole())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
