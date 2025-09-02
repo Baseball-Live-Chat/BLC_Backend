@@ -18,7 +18,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Log4j2
 public class UserSyncService {
-
+    // Firebase Token 기반으로 변경
     private final UserRepository userRepository;
 
     /**

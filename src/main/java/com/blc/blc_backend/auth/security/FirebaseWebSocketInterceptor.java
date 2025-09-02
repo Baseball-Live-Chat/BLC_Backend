@@ -16,7 +16,7 @@ import java.util.Map;
 @Slf4j
 @Component
 public class FirebaseWebSocketInterceptor implements HandshakeInterceptor {
-
+    // Firebase Token 기반으로 변경
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {

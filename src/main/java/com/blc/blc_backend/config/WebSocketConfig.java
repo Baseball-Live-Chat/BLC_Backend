@@ -12,7 +12,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
+    // Firebase Token 기반으로 변경
     private final FirebaseWebSocketInterceptor firebaseWebSocketInterceptor;
 
     @Override

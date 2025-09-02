@@ -21,7 +21,7 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
+    // Firebase Token 기반으로 변경
     private final FirebaseAuthFilter firebaseAuthFilter;
 
     @Bean
